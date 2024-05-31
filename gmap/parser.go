@@ -40,15 +40,15 @@ func castSlice(portString []string) ([]int, error) {
 
 func generateRange(start int, end int) []int {
 
+	// Check for errors in ranges
 	if start > end || end > 65535 || start < 0 || end < 0 {
 		// TODO control de errores
 		return nil
 	}
 
-	portRange := end - start + 1
+	ports := make([]int, end-start+1)
 
-	ports := make([]int, portRange)
-
+	// Generate range list
 	for i := 0; i <= end; i++ {
 		ports[i] = i
 	}
@@ -65,7 +65,7 @@ func parsePorts(portString string) []int {
 	if strings.Contains(portString, "-") {
 		portList = strings.Split(portString, "-")
 
-		// Generate range of ports
+		// Check for errors
 		if len(portList) == 2 {
 			start, err1 := strconv.Atoi(portList[0])
 			end, err2 := strconv.Atoi(portList[1])
@@ -73,9 +73,11 @@ func parsePorts(portString string) []int {
 			if err1 != nil || err2 != nil {
 				fmt.Println("[ERROR] Arguments must be Integers")
 				printHelp()
+				// TODO CHECK FOR ERROR
 				return nil
 			}
 
+			// Generate range of ports
 			ports = generateRange(start, end)
 
 		} else {
@@ -87,11 +89,13 @@ func parsePorts(portString string) []int {
 	} else if strings.Contains(portString, ",") { // Parse a list
 		portList := strings.Split(portString, ",")
 
+		// Cast the string slice to int slice
 		ports, _ = castSlice(portList)
 
 	} else { // Parse a single port
 		port, err := strconv.Atoi(portString)
 
+		// TODO CHECK FOR ERROR
 		if err == nil {
 			ports = append(ports, port)
 		}
