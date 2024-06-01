@@ -1,16 +1,13 @@
 package scanner
 
-/*
 import (
 	"fmt"
-	"net"
-	"sort"
-	"time"
-	"errors"
+	"gmap/utils"
 )
-*/
 
 // TODO
-// func scanPort()
 
-// TODO AÑADIR TIPOS DE ESCANEO
+func udpScan(scan utils.ScanParameters) []utils.Port {
+	fmt.Println("todo")
+	return nil
+}

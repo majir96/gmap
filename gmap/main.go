@@ -1,25 +1,9 @@
 package main
 
-import "fmt"
-
-/*
-
 import (
-	"flag"
 	"fmt"
-	"os"
-	"strings"
-	"time"
-	"gmap/scanner"
-	"strconv"
-	"bufio"
-	"encoding/xml"
-	"os/exec"
-	"errors"
+	"gmap/utils"
 )
-
-
-*/
 
 func main() {
 	// Show banner
@@ -35,7 +19,7 @@ func main() {
 
 	// Check that target is provided
 	if args.Target == "" {
-		fmt.Errorf("target must be provided")
+		utils.PrintError("target must be provided")
 		printHelp()
 		return
 	}
@@ -43,7 +27,7 @@ func main() {
 	// Parse ports
 	ports, err := parsePorts(args.Ports)
 	if err != nil {
-		fmt.Printf("[ERROR] %v", err)
+		utils.PrintError(fmt.Sprintf("[ERROR] %v", err))
 		printHelp()
 		return
 	}
@@ -51,7 +35,7 @@ func main() {
 	// Parse target
 	target, err := parseTarget(args.Target)
 	if err != nil {
-		fmt.Printf("[ERROR] %v", err)
+		utils.PrintError(fmt.Sprintf("[ERROR] %v", err))
 		printHelp()
 		return
 	}
