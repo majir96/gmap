@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -30,39 +31,53 @@ func parseArguments() Arguments {
 	flag.StringVar(&args.Target, "t", "", "Target to scan")
 	flag.StringVar(&args.Target, "target", "", "Target to scan")
 
+	flag.Parse()
+
 	return args
 
 }
 
 func castSlice(portString []string) ([]int, error) {
-	return nil, nil
+	portInt := make([]int, len(portString))
+
+	for i, p := range portString {
+		port, err := strconv.Atoi(p)
+
+		// Check for errors
+		if err != nil {
+			return nil, fmt.Errorf("arguments must be integers %s", p)
+		}
+
+		portInt[i] = port
+	}
+
+	return portInt, nil
 }
 
-func generateRange(start int, end int) []int {
+func generateRange(start int, end int) ([]int, error) {
 
 	// Check for errors in ranges
 	if start > end || end > 65535 || start < 0 || end < 0 {
-		// TODO control de errores
-		return nil
+		return nil, fmt.Errorf("invalid port range: %d - %d", start, end)
 	}
 
 	ports := make([]int, end-start+1)
 
 	// Generate range list
-	for i := 0; i <= end; i++ {
-		ports[i] = i
+	for i := start; i <= end; i++ {
+		ports[i-start] = i
 	}
 
-	return ports
+	return ports, nil
 
 }
 
-func parsePorts(portString string) []int {
-	var ports []int
+func parsePorts(portString string) ([]int, error) {
 	var portList []string
 
-	// Parse a range
-	if strings.Contains(portString, "-") {
+	switch {
+	// Parse a range of ports
+	case strings.Contains(portString, "-"):
 		portList = strings.Split(portString, "-")
 
 		// Check for errors
@@ -71,38 +86,50 @@ func parsePorts(portString string) []int {
 			end, err2 := strconv.Atoi(portList[1])
 
 			if err1 != nil || err2 != nil {
-				fmt.Println("[ERROR] Arguments must be Integers")
-				printHelp()
-				// TODO CHECK FOR ERROR
-				return nil
+				return nil, fmt.Errorf("range arguments must be integers: %d - %d", start, end)
 			}
 
-			// Generate range of ports
-			ports = generateRange(start, end)
-
+			// Generate slice between ranges start and end
+			return generateRange(start, end)
 		} else {
-			fmt.Println("[ERROR] Just 2 arguments are needed for ports")
-			printHelp()
-			return nil
+			return nil, fmt.Errorf("exactly 2 arguments are needed for port range")
 		}
 
-	} else if strings.Contains(portString, ",") { // Parse a list
+		// Parse a list of ports
+	case strings.Contains(portString, ","):
 		portList := strings.Split(portString, ",")
-
 		// Cast the string slice to int slice
-		ports, _ = castSlice(portList)
+		return castSlice(portList)
 
-	} else { // Parse a single port
-		port, err := strconv.Atoi(portString)
+	// Check if single character is integer and do
+	default:
+		if _, err := strconv.Atoi(portString); err == nil {
+			port, err := strconv.Atoi(portString)
 
-		// TODO CHECK FOR ERROR
-		if err == nil {
-			ports = append(ports, port)
+			if err != nil {
+				return nil, fmt.Errorf("arguments must be Integers %s", portString)
+			}
+
+			return []int{port}, nil
 		}
 
+		// Unhandled cases
+		return nil, fmt.Errorf("invalid format provided for ports at: %s", portString)
 	}
 
-	return ports
+}
+
+func parseTarget(targetString string) (string, error) {
+	// Regex for IPv4
+	const pattern = `^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$`
+
+	re := regexp.MustCompile(pattern)
+
+	if !re.MatchString(targetString) {
+		return "", fmt.Errorf("invalid target host %s", targetString)
+	}
+
+	return targetString, nil
 }
 
 func printHelp() {

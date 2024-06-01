@@ -12,3 +12,5 @@ import (
 
 // TODO
 // func scanPort()
+
+// TODO AÑADIR TIPOS DE ESCANEO
