@@ -137,6 +137,7 @@ func printHelp() {
 	fmt.Printf("  -p, --port    	Port(s) to scan. Default set to %s\n", utils.CommonPorts)
 	fmt.Println("If various ports are to be scanned separate by commas, i.e -p 22,23")
 	fmt.Println("If a range is to be scanned separate by hyphen, i.e -p 0-400")
+	fmt.Println("Services will automatically be scanned or obtained for all ports")
 	fmt.Println(" -p-               All ports are to be scanned 0-65535")
 	fmt.Println("  -t, --target     Target to scan (required)")
 	fmt.Println("  -h, --help       Display this help message")
