@@ -3,6 +3,9 @@ package utils
 import (
 	"fmt"
 	"time"
+	"os"
+	"encoding/csv"
+	"encoding/json"
 )
 
 // Lines Const
@@ -102,6 +105,7 @@ type Arguments struct {
 	Output bool // TODO : -> Write to file 
 	Open bool 
 	Timeout time.Duration 
+	Format string 
 	// TODO ADD MORE OPTIONS
 	/**
 	NOTE: Options to filter by 
@@ -138,4 +142,23 @@ func PrintError(msg string) error {
 // Print success in green
 func PrintSuccess(msg string) {
 	fmt.Printf("%s%s%s\n", Green, msg, Reset)
+}
+
+// todo: exporttotxt
+// todo: exporttocsv
+// todo: exportojson 
+
+
+
+// Export to file 
+func ExportResults(results []Port, file string, format string){
+	// Handle formats to export to 
+	switch format{
+	case "txt":
+		return exportToTxt(results,file)
+	case "csv":
+		return exportToCsv(resuts, file)
+	case "json": 
+		return exportToJson(results, file)
+	}
 }

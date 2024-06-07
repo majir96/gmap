@@ -29,6 +29,9 @@ func parseArguments() utils.Arguments {
 	flag.StringVar(&args.Target, "t", "", "Target to scan")
 	flag.StringVar(&args.Target, "target", "", "Target to scan")
 
+	flag.StringVar(&args.Format, "f", ".txt", "Format to export the file to, default to txt")
+	flag.StringVar(&args.Format, "format", ".txt", "Format to export the file to, default to txt")
+
 	var timeout string 
 	flag.StringVar(&timeout, "timeout", "1s","Delaty timeout for packets being sent (e.g., 500ms, 2s, 1m)")
 
@@ -143,6 +146,17 @@ func parseTarget(targetString string) (string, error) {
 	return targetString, nil
 }
 
+// TODO : MODIFICAR CHECK THE OUTPUT, TIENE QUE SER BOOLEANO PERO COGER EL STRING SI ESTE ESTA DEFINIDO 
+// TODO: VER COMO HACER 
+func parseFormat(output bool, file string, format string) error{
+	// TODO: PARTE QUE FALTA 
+
+	if format != "txt" and format != "json" and format != "csv"{
+		return utils.PrintError("[ERROR] unsupported file provided")
+	}
+}
+
+
 func printHelp() {
 	fmt.Println("Help panel for gomap:")
 	fmt.Println(utils.Lines)
@@ -150,16 +164,17 @@ func printHelp() {
 	fmt.Println("./gomap -t <IP> -p <PORTS> -o ")
 	fmt.Println(utils.Lines)
 	fmt.Println("Options:")
-	fmt.Printf("   -p, --port  <PORTS>  Port(s) to scan. Default set to %s\n", utils.CommonPorts)
+	fmt.Printf("   -p, --port  <PORTS>   Port(s) to scan. Default set to %s\n", utils.CommonPorts)
 	fmt.Println("If various ports are to be scanned separate by commas, i.e -p 22,23")
 	fmt.Println("If a range is to be scanned separate by hyphen, i.e -p 0-400")
 	fmt.Println("Services will automatically be scanned or obtained for all ports")
-	fmt.Println("  -p-              	All ports are to be scanned 0-65535")
-	fmt.Println("  -t, --target <IP>    Target to scan (required)")
-	fmt.Println("  -h, --help       	Display this help message")
-	fmt.Println("  -o, --output <FILE>  Export output to file, default format .txt")
-	fmt.Println("  --open 				Filter by open ports on output ")
-	fmt.Println(" --timeout <TIMEOUT>	Timeout to be set for packets when scanning (e.g., 500ms, 2s, 1m)")
+	fmt.Println("  -p-              	 All ports are to be scanned 0-65535")
+	fmt.Println("  -t, --target <IP>     Target to scan (required)")
+	fmt.Println("  -h, --help       	 Display this help message")
+	fmt.Println("  -o, --output <FILE>   Export output to file, default format .txt")
+	fmt.Println("  -f, --format <FORMAT> Format to export the file to. Available formats txt, csv, json")
+	fmt.Println("  --open 				 Filter by open ports on output ")
+	fmt.Println(" --timeout <TIMEOUT>	 Timeout to be set for packets when scanning (e.g., 500ms, 2s, 1m)")
 	fmt.Println(utils.Lines)
 	fmt.Println("Example of use:")
 	fmt.Println("./gomap -t 127.0.0.1 -p 0-65535 -o test")
