@@ -99,11 +99,12 @@ type Arguments struct {
 	Help   bool
 	Ports  string
 	Target string
-	Output bool
+	Output bool // TODO : -> Write to file 
+	Open bool 
+	Timeout time.Duration 
 	// TODO ADD MORE OPTIONS
 	/**
 	NOTE: Options to filter by 
-		--open
 		-sS 
 		-nmap 
 		--min-rate 
