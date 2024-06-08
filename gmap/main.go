@@ -2,21 +2,22 @@ package main
 
 import (
 	"fmt"
+	"gmap/scanner"
 	"gmap/utils"
+	"os"
 	"os/signal"
-    "syscall"
+	"syscall"
 )
 
 func main() {
-	// SIGINT handling 
+	// SIGINT handling
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func(){
-		<-c 
-		fmt.Printf("%s%s%s\n", utils.RED , "[*] Exiting...", Reset)
+	go func() {
+		<-c
+		fmt.Printf("%s%s%s\n", utils.Red, "[*] Exiting...", utils.Reset)
 		os.Exit(1)
 	}()
-
 
 	// Show banner
 	printBanner()
@@ -50,50 +51,48 @@ func main() {
 		return
 	}
 
-	// Parse Scan Type 
+	// Parse Scan Type
 	scanType, err := parseScanType(args.ScanType)
 	if err != nil {
 		printHelp()
-		return 
+		return
 	}
-
 
 	// Validate output and format if output flag is set
 	if outputFlagSet {
-		if err := parseFormat(args.OutputFile, args.Format); err != nil {
+		if err := parseFormat(args.Output, args.Format); err != nil {
 			printHelp()
 			return
 		}
 	}
 
-	// Set the scan parameters 
+	// Set the scan parameters
 	scanParams := utils.ScanParameters{
 		Target:  target,
 		Ports:   ports,
-		Timeout: args.Timeout, 
+		Timeout: args.Timeout,
 	}
 
+	var results []utils.Port
 
-	var results[] Port 
-
-	// Perform Scan 
+	// Perform Scan
 	switch scanType {
-	// Perform UDP Scan 
+	// Perform UDP Scan
 	case "udp":
-		results = scanner.udpScan(scanParams)
-	// Perform TCP Scan 
+		results = scanner.UdpScan(scanParams)
+	// Perform TCP Scan
 	case "tcp":
-		results = scanner.tcpScan(scanParams)
+		results = scanner.TcpScan(scanParams)
 	}
 
-	// Export results if necessary 
-	if args.OutputFile != "" {
-		if err := utils.ExportResults(results, args.OutputFile, args.Format); err != nil {
+	// Export results if necessary
+	if args.Output != "" {
+		if err := utils.ExportResults(results, args.Output, args.Format); err != nil {
 			fmt.Println(err)
 			printHelp()
 		}
 	}
-	
-	// Succesfull exit 
+
+	// Succesfull exit
 	os.Exit(0)
 }
