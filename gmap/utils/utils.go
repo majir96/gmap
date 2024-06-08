@@ -102,17 +102,17 @@ type Arguments struct {
 	Help   bool
 	Ports  string
 	Target string
-	Output bool // TODO : -> Write to file 
+	Output string
 	Open bool 
 	Timeout time.Duration 
 	Format string 
+	ScanType string 
 	// TODO ADD MORE OPTIONS
 	/**
 	NOTE: Options to filter by 
 		-sS 
 		-nmap 
 		--min-rate 
-		--timeout 
 		--ip-range 
 		-vvv
 	
@@ -144,21 +144,79 @@ func PrintSuccess(msg string) {
 	fmt.Printf("%s%s%s\n", Green, msg, Reset)
 }
 
-// todo: exporttotxt
-// todo: exporttocsv
-// todo: exportojson 
+func exportToTxt(results []Port, file File) error {
+	// Dump results 
+	for _, result := range results {
+		line := fmt.Sprintf("Port: %d, Status: %s, Service: %s\n", result.port, result.status, result.service)
+		if _, err := file.WriteString(line); err != nil {
+			return fmt.Errorf("could not write to file: %v", err)
+		}
+	}
+
+	PrintSuccess("[!] Results successfully exported to .txt file")
+	return nil 
+}
+
+
+func exportToCsv(results []Port, file File) error {
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Write header
+	header := []string{"Port", "Status", "Service"}
+	if err := writer.Write(header); err != nil {
+		return PrintError(fmt.Sprintf("[ERROR] could not write header to file: %v", err))
+	}
+
+	// Dump results
+	for _, result := range results {
+		record := []string{fmt.Sprintf("%d", result.port), result.status, result.service}
+
+		if err := writer.Write(record); err != nil {
+			return PrintError(fmt.Sprintf("[ERROR] could not write record to file: %v", err))
+		}
+	}
+
+	PrintSuccess("[!] Results successfully exported to .csv file")
+	return nil 
+}
+
+
+func exportToJson(results []Port, file FILE) error {
+
+	encoder := json.NewEncoder(f)
+	if err := encoder.Encode(results); err != nil {
+		return PrintError(fmt.Sprintf("[ERROR] could not encode results to JSON: %v", err))
+	}
+
+	PrintSuccess("[!] Results successfully exported to .json file")
+	return nil 
+}
 
 
 
 // Export to file 
-func ExportResults(results []Port, file string, format string){
+func ExportResults(results []Port, file string, format string) error{
+
+	fileName = fmt.Sprintf("%s.%s", file, format)
+
+	// Create file 
+	f, err := os.Create(fileName)
+	if err != nil {
+		return PrintError("could not create file: %v", err)
+	}
+	
+	defer f.Close()
+
+
 	// Handle formats to export to 
 	switch format{
 	case "txt":
-		return exportToTxt(results,file)
+		return exportToTxt(results,f)
 	case "csv":
-		return exportToCsv(resuts, file)
+		return exportToCsv(resuts, f)
 	case "json": 
-		return exportToJson(results, file)
+		return exportToJson(results, f)
 	}
 }

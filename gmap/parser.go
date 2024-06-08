@@ -10,6 +10,9 @@ import (
 	"strings"
 )
 
+
+var outputFlagSet bool 
+
 func parseArguments() utils.Arguments {
 	var args utils.Arguments
 
@@ -17,8 +20,8 @@ func parseArguments() utils.Arguments {
 	flag.BoolVar(&args.Help, "h", false, "Display help panel")
 	flag.BoolVar(&args.Help, "help", false, "Display help panel")
 
-	flag.BoolVar(&args.Output, "o", false, "Export output to file")
-	flag.BoolVar(&args.Output, "output", false, "Export output to file")
+	flag.StringVar(&args.Output, "o", "", "Export output to file")
+	flag.StringVar(&args.Output, "output", "", "Export output to file")
 
 	flag.BoolVar(&args.open, "open", false, "Show only opened ports")
 
@@ -29,6 +32,10 @@ func parseArguments() utils.Arguments {
 	flag.StringVar(&args.Target, "t", "", "Target to scan")
 	flag.StringVar(&args.Target, "target", "", "Target to scan")
 
+	flag.StringVar(&args.ScanType, "s", "tcp", "Type of scan to perform")
+	flag.StringVar(&args.ScanType, "scan", "tcp", "Type of scan to perform")
+
+
 	flag.StringVar(&args.Format, "f", ".txt", "Format to export the file to, default to txt")
 	flag.StringVar(&args.Format, "format", ".txt", "Format to export the file to, default to txt")
 
@@ -37,14 +44,22 @@ func parseArguments() utils.Arguments {
 
 	flag.Parse()
 
+	// Parse and check if timeout format is correct 
 	parsedTimeout, err := time.ParseDuration(timeout)
-
 	if err != nil {
 		fmt.Println(utils.PrintError(fmt.Sprintf("Invalid timeout value: %s, defaulting to 2s", timeout)))
 		parsedTimeout = 2 * time.Second
 	}
 
 	args.Timeout = parsedTimeout
+
+
+	// Check if the output flag was explicitly set by the user
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "o" || f.Name == "output" {
+			outputFlagSet = true
+		}
+	})
 
 
 	return args
@@ -146,15 +161,28 @@ func parseTarget(targetString string) (string, error) {
 	return targetString, nil
 }
 
-// TODO : MODIFICAR CHECK THE OUTPUT, TIENE QUE SER BOOLEANO PERO COGER EL STRING SI ESTE ESTA DEFINIDO 
-// TODO: VER COMO HACER 
-func parseFormat(output bool, file string, format string) error{
-	// TODO: PARTE QUE FALTA 
 
-	if format != "txt" and format != "json" and format != "csv"{
+func parseFormat(output string, format string) error{
+
+	if output == "" {
+		return utils.PrintError("[ERROR] output filename must be provided")
+	}
+	
+	if format != "txt" && format != "json" && format != "csv"{
 		return utils.PrintError("[ERROR] unsupported file provided")
 	}
+
+	return nil 
 }
+
+func parseScanType(scan string) string, error {
+	
+	if scan != "udp" && scan != "tcp" {
+		return "", utils.PrintError("[ERROR] unsupported scan type")
+	}
+
+	return scan, nil 
+} 
 
 
 func printHelp() {
@@ -170,9 +198,15 @@ func printHelp() {
 	fmt.Println("Services will automatically be scanned or obtained for all ports")
 	fmt.Println("  -p-              	 All ports are to be scanned 0-65535")
 	fmt.Println("  -t, --target <IP>     Target to scan (required)")
+	fmt.Println("  -s, --scan 	<SCAN>	 Type of scan to perform. Options:")
+	fmt.Println("  tcp: 				 Perform a TCP Scan (default)")
+	fmt.Println("  udp: 				 Perform a UDP Scan ")
 	fmt.Println("  -h, --help       	 Display this help message")
 	fmt.Println("  -o, --output <FILE>   Export output to file, default format .txt")
-	fmt.Println("  -f, --format <FORMAT> Format to export the file to. Available formats txt, csv, json")
+	fmt.Println("  -f, --format <FORMAT> Format to export the file to. Formats:")
+	fmt.Println("  txt: 				 Export to text file (default)")
+	fmt.Println("  csv: 				 Export to csv file")
+	fmt.Println("  json: 				 Export to json file")
 	fmt.Println("  --open 				 Filter by open ports on output ")
 	fmt.Println(" --timeout <TIMEOUT>	 Timeout to be set for packets when scanning (e.g., 500ms, 2s, 1m)")
 	fmt.Println(utils.Lines)

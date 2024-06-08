@@ -10,7 +10,7 @@ import (
 // Auxiliary function to check if service is known 
 func checkService(service string) string{
 	
-	if service == ""{
+	if service == "" {
 		service = "unknown"
 	}
 	
