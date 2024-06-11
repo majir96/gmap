@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gmap/utils"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -45,43 +46,115 @@ func bannerGrab(conn net.Conn) string {
 	return string(buffer[:n])
 }
 
+// TCP Worker for go routine Multithreading
+func tcpWorker(target string, port int, timeout time.Duration, results chan<- utils.Port, wg *sync.WaitGroup) {
+	// Defer the call to Done to ensure the WaitGroup counter is decremented when the function completes
+	defer wg.Done()
+
+	// Format address string
+	address := fmt.Sprintf("%s:%d", target, port)
+
+	// Try to establish connection
+	conn, err := net.DialTimeout("tcp", address, timeout)
+
+	var state, service string
+
+	if err != nil {
+		// Check wether the port is closed or filtered based on error
+		if opErr, ok := err.(*net.OpError); ok && opErr.Err.Error() == "connect: connection refused" {
+			state = "closed"
+		} else {
+			state = "filtered"
+		}
+		service = utils.CommonServices[port]
+	} else { // If no error, port is opened
+		// We try to check for banner to determien service
+		service = bannerGrab(conn)
+		state = "open"
+		conn.Close()
+	}
+
+	// Check service
+	service = checkService(service)
+
+	// Send back the result through results channel
+	results <- utils.Port{Port: port, Status: state, Service: service}
+}
+
+// UDP Worker for go routine multithreading
+func udpWorker(target string, port int, timeout time.Duration, results chan<- utils.Port, wg *sync.WaitGroup) {
+	// Defer the call to Done to ensure the WaitGroup counter is decremented when the function completes
+	defer wg.Done()
+
+	// Format address
+	address := fmt.Sprintf("%s:%d", target, port)
+
+	// Try to establish connection
+	conn, err := net.DialTimeout("udp", address, timeout)
+
+	var state, service string
+	// If an error occurs the port is closed
+	if err != nil {
+		service = utils.CommonServices[port]
+		results <- utils.Port{Port: port, Status: "closed", Service: service}
+		return
+	}
+	// Ensure the connection is closed
+	defer conn.Close()
+
+	// Send a ping to check if port is closed
+	_, err = conn.Write([]byte("Ping"))
+	if err != nil {
+		results <- utils.Port{Port: port, Status: "closed", Service: ""}
+		return
+	}
+
+	// Set a read timeline for the response
+	conn.SetReadDeadline(time.Now().Add(timeout))
+	buff := make([]byte, 1024)
+	n, err := conn.Read(buff)
+
+	if err != nil {
+		// If no response, port is either opened or filtered
+		service = utils.CommonServices[port]
+		state = "open/filtered"
+	} else {
+		// If there is response, port is opened
+		service = string(buff[:n])
+		state = "open"
+	}
+
+	// Check service
+	service = checkService(service)
+
+	// Send back the result through results channel
+	results <- utils.Port{Port: port, Status: state, Service: service}
+}
+
 // Function to perform a basic TCP Scan
 func TcpScan(scan utils.ScanParameters) []utils.Port {
 	var results []utils.Port
+	resultChan := make(chan utils.Port, len(scan.Ports))
+	var wg sync.WaitGroup
 
 	fmt.Printf("%s[*] Starting TCP scan on host %s%s\n", utils.Blue, scan.Target, utils.Reset)
 	fmt.Println(utils.Lines)
 
 	for _, port := range scan.Ports {
-		var state, service string
+		wg.Add(1)
+		go tcpWorker(scan.Target, port, scan.Timeout, resultChan, &wg)
+	}
 
-		address := fmt.Sprintf("%s:%d", scan.Target, port)
-		conn, err := net.DialTimeout("udp", address, scan.Timeout)
+	wg.Wait()
+	close(resultChan)
 
-		// Closed Port
-		if err != nil {
-			// Check if it is really closed
-			if opErr, ok := err.(*net.OpError); ok && opErr.Err.Error() == "connect: connection refused" {
-				state = "closed"
-			} else { // We asumme it is filtered
-				state = "filtered"
-			}
-			service = utils.CommonServices[port]
-		} else {
-			service = bannerGrab(conn)
-			state = "open"
-		}
-
-		// Making sure the connection will be closed afterwards
-		defer conn.Close()
-
-		service = checkService(service)
-		results = append(results, utils.Port{port, state, service})
+	for result := range resultChan {
+		results = append(results, result)
 	}
 
 	fmt.Println(utils.Lines)
 	fmt.Printf("%s[*] TCP Scan finished on host %s%s\n", utils.Blue, scan.Target, utils.Reset)
-	fmt.Printf("%s[*] %d ports scanned %d up %s%s\n", utils.Blue, len(scan.Ports), countOpenPorts(results), utils.Reset)
+	fmt.Printf("%s[*] %d ports scanned %d up %s\n", utils.Blue, len(scan.Ports), countOpenPorts(results), utils.Reset)
 
 	return results
 }
@@ -89,60 +162,27 @@ func TcpScan(scan utils.ScanParameters) []utils.Port {
 // Function to perform an UDP Scan
 func UdpScan(scan utils.ScanParameters) []utils.Port {
 	var results []utils.Port
+	resultChan := make(chan utils.Port, len(scan.Ports))
+	var wg sync.WaitGroup
 
 	fmt.Printf("%s[*] Starting UDP scan on host %s%s\n", utils.Blue, scan.Target, utils.Reset)
 	fmt.Println(utils.Lines)
 
 	for _, port := range scan.Ports {
-		var state, service string
+		wg.Add(1)
+		go udpWorker(scan.Target, port, scan.Timeout, resultChan, &wg)
+	}
 
-		address := fmt.Sprintf("%s:%d", scan.Target, port)
-		conn, err := net.DialTimeout("udp", address, scan.Timeout)
+	wg.Wait()
+	close(resultChan)
 
-		// Closed port
-		if err != nil {
-			service = utils.CommonServices[port]
-			results = append(results, utils.Port{port, "closed", service})
-			continue
-		}
-
-		// Making sure the connection will be closed afterwards
-		defer conn.Close()
-
-		// Sending a ping through connection
-		_, err = conn.Write([]byte("Ping"))
-
-		// Consider error in ping to be a closed port
-		if err != nil {
-			results = append(results, utils.Port{port, "closed", ""})
-			continue
-		}
-
-		// Set deadline to wait for response based on set timeout
-		conn.SetReadDeadline(time.Now().Add(scan.Timeout))
-
-		// Read response
-		buff := make([]byte, 1024)
-		n, err := conn.Read(buff)
-
-		if err != nil { // If there is no response it is either filtered or opened
-
-			service = utils.CommonServices[port]
-			state = "open/filtered"
-
-		} else { // If there is response it is opened
-			service = string(buff[:n])
-			state = "open"
-		}
-
-		service = checkService(service)
-		results = append(results, utils.Port{port, state, service})
-
+	for result := range resultChan {
+		results = append(results, result)
 	}
 
 	fmt.Println(utils.Lines)
 	fmt.Printf("%s[*] UDP Scan finished on host %s%s\n", utils.Blue, scan.Target, utils.Reset)
-	fmt.Printf("%s[*] %d ports scanned %d up %s%s\n", utils.Blue, len(scan.Ports), countOpenPorts(results), utils.Reset)
+	fmt.Printf("%s[*] %d ports scanned %d up %s\n", utils.Blue, len(scan.Ports), countOpenPorts(results), utils.Reset)
 
 	return results
 }
