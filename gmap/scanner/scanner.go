@@ -6,7 +6,36 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	"github.com/go-ping/ping"
 )
+
+// Check Availability of host
+func HostUp(target string, timeout time.Duration) bool {
+	pinger, err := ping.NewPinger(target)
+
+	if err != nil {
+		utils.PrintError(fmt.Sprintf("[ERROR] Failed to create pinger for target %s", target))
+		return false
+	}
+
+	// Establish parameters for pinger
+	pinger.Count = 3
+	pinger.Timeout = timeout
+	pinger.SetPrivileged(true)
+
+	// Block until finished
+	err = pinger.Run()
+
+	if err != nil {
+		utils.PrintError(fmt.Sprintf("[ERROR] Ping failed for target %s", target))
+		return false
+	}
+
+	stats := pinger.Statistics()
+
+	return stats.PacketsRecv > 0
+}
 
 // Auxiliary function to check if service is known
 func checkService(service string) string {
