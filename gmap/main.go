@@ -73,16 +73,25 @@ func main() {
 		Timeout: args.Timeout,
 	}
 
+	var hostDiscovery bool = args.HostDiscovery
+
 	var results []utils.Port
 
-	// Perform Scan
-	switch scanType {
-	// Perform UDP Scan
-	case "udp":
-		results = scanner.UdpScan(scanParams)
-	// Perform TCP Scan
-	case "tcp":
-		results = scanner.TcpScan(scanParams)
+	if hostDiscovery || !hostDiscovery && scanner.HostUp(scanParams.Target, scanParams.Timeout) {
+		// Perform Scan
+		switch scanType {
+		// Perform UDP Scan
+		case "udp":
+			results = scanner.UdpScan(scanParams)
+		// Perform TCP Scan
+		case "tcp":
+			results = scanner.TcpScan(scanParams)
+		// Perform SYN Scan
+		case "syn":
+			results = scanner.SynScan(scanParams)
+		}
+	} else {
+		utils.PrintError("[ERROR] Host is not up")
 	}
 
 	// Export results if necessary

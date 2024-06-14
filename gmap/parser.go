@@ -31,6 +31,8 @@ func parseArguments() utils.Arguments {
 	flag.StringVar(&args.Target, "t", "", "Target to scan")
 	flag.StringVar(&args.Target, "target", "", "Target to scan")
 
+	flag.BoolVar(&args.HostDiscovery, "Pn", false, "Do not check if host is up")
+
 	flag.StringVar(&args.ScanType, "s", "tcp", "Type of scan to perform")
 	flag.StringVar(&args.ScanType, "scan", "tcp", "Type of scan to perform")
 
@@ -172,7 +174,7 @@ func parseFormat(output string, format string) error {
 
 func parseScanType(scan string) (string, error) {
 
-	if scan != "udp" && scan != "tcp" {
+	if scan != "udp" && scan != "tcp" && scan != "syn" {
 		return "", utils.PrintError("[ERROR] unsupported scan type")
 	}
 
@@ -195,6 +197,7 @@ func printHelp() {
 	fmt.Printf("  %s-s, --scan <SCAN>         Type of scan to perform. Options:%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("                            %stcp: Perform a TCP Scan (default)%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("                            %sudp: Perform a UDP Scan%s\n", utils.LightGreen, utils.Reset)
+	fmt.Printf("                            %ssyn: Perform a SYN Scan%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("  %s-h, --help                Display this help message%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("  %s-o, --output <FILE>       Export output to file, default format .txt%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("  %s-f, --format <FORMAT>     Format to export the file to. Formats:%s\n", utils.LightGreen, utils.Reset)
@@ -203,6 +206,7 @@ func printHelp() {
 	fmt.Printf("                            %sjson: Export to json file%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("  %s--open                    Filter by open ports on output%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("  %s--timeout <TIMEOUT>       Timeout to be set for packets when scanning (e.g., 500ms, 2s, 1m)%s\n", utils.LightGreen, utils.Reset)
+	fmt.Printf("  %s-Pn       				  Do not check if host is up when scanning%s\n", utils.LightGreen, utils.Reset)
 	fmt.Println(utils.Lines)
 	fmt.Printf("%sExample of use:%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("%s./gomap -t 127.0.0.1 -p 0-65535 -o test%s\n", utils.LightGreen, utils.Reset)

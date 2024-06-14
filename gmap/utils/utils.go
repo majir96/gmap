@@ -109,18 +109,18 @@ var CommonServices = map[int]string{
 
 // Type definitions
 type Arguments struct {
-	Help     bool
-	Ports    string
-	Target   string
-	Output   string
-	Open     bool
-	Timeout  time.Duration
-	Format   string
-	ScanType string
+	Help          bool
+	Ports         string
+	Target        string
+	Output        string
+	Open          bool
+	Timeout       time.Duration
+	Format        string
+	ScanType      string
+	HostDiscovery bool
 	// TODO ADD MORE OPTIONS
 	/**
 	NOTE: Options to filter by
-		-sS
 		-nmap
 		--min-rate
 		--ip-range
