@@ -185,7 +185,7 @@ func printHelp() {
 	fmt.Println("Help panel for gomap:")
 	fmt.Println(utils.Lines)
 	fmt.Printf("%sUsage%s\n", utils.LightGreen, utils.Reset)
-	fmt.Printf("%s./gomap -t <IP> -p <PORTS> -o %s\n", utils.LightGreen, utils.Reset)
+	fmt.Printf("%s./gmap -t <IP> -p <PORTS> -o %s\n", utils.LightGreen, utils.Reset)
 	fmt.Println(utils.Lines)
 	fmt.Printf("%sOptions:%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("  %s-p, --port <PORTS>        %s%sPort(s) to scan. Default set to %s%s\n", utils.LightGreen, utils.Reset, utils.BrightWhite, utils.CommonPorts, utils.Reset)

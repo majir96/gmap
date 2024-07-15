@@ -24,7 +24,7 @@ To compile gmap you can use the Go build tool. Here are the steps to do so, incl
 ### **Build the Executable**
 
 ```sh
-go build -ldflags="-s -w" -o gmap main.go
+go build -ldflags="-s -w" -o gmap .
 ```
 #### Options for other OS
 You can cross-compile the executable for different operating systems. 
