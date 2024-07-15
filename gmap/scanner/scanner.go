@@ -450,3 +450,30 @@ func UdpScan(scan utils.ScanParameters) []utils.Port {
 
 	return results
 }
+
+func PerformScan(scan utils.ScanParameters, scanType string) []utils.Port {
+	var results []utils.Port
+	resultChan := make(chan utils.Port, len(scan.Ports))
+	var wg sync.WaitGroup
+
+	fmt.Printf("%s[*] Starting %s scan on host %s%s\n", utils.Blue, scan.Target, scanType, utils.Reset)
+	fmt.Println(utils.Lines)
+
+	for _, port := range scan.Ports {
+		wg.Add(1)
+		go udpWorker(scan.Target, port, scan.Timeout, resultChan, &wg)
+	}
+
+	wg.Wait()
+	close(resultChan)
+
+	for result := range resultChan {
+		results = append(results, result)
+	}
+
+	fmt.Println(utils.Lines)
+	fmt.Printf("%s[*] %s Scan finished on host %s%s\n", utils.Blue, scanType, scan.Target, utils.Reset)
+	fmt.Printf("%s[*] %d ports scanned %d up %s\n", utils.Blue, len(scan.Ports), countOpenPorts(results), utils.Reset)
+
+	return results
+}

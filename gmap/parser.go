@@ -206,7 +206,7 @@ func printHelp() {
 	fmt.Printf("                            %sjson: Export to json file%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("  %s--open                    Filter by open ports on output%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("  %s--timeout <TIMEOUT>       Timeout to be set for packets when scanning (e.g., 500ms, 2s, 1m)%s\n", utils.LightGreen, utils.Reset)
-	fmt.Printf("  %s-Pn       				  Do not check if host is up when scanning%s\n", utils.LightGreen, utils.Reset)
+	fmt.Printf("  %s-Pn       		    Do not check if host is up when scanning%s\n", utils.LightGreen, utils.Reset)
 	fmt.Println(utils.Lines)
 	fmt.Printf("%sExample of use:%s\n", utils.LightGreen, utils.Reset)
 	fmt.Printf("%s./gomap -t 127.0.0.1 -p 0-65535 -o test%s\n", utils.LightGreen, utils.Reset)
